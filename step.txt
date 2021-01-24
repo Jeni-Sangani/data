@@ -1,0 +1,100 @@
+1.create .propertie file in service app 
+=>other resource/defaultpackage  
+add one line
+	accepted.issuer=https://server.example.com
+
+2. add public key into defaultpackage folder in service app
+
+3. create META-INF folder in src/main/resource
+=>	create persistance unit
+
+4.create entity in source folder 
+
+5.Add line into Bootstrap.java file in config folder
+=>
+@SuppressWarnings({"EmptyClass", "SuppressionAnnotation"})
+@ApplicationPath("rest")
+@LoginConfig(authMethod = "MP-JWT")
+@DeclareRoles({"Admin","User"})
+public class BootStrap extends javax.ws.rs.core.Application {
+}
+
+6.add function in example service 
+=>
+	@GET
+    @RolesAllowed("Admin")
+    @Path("GetProduct")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getProduct() {
+        return "hello";
+    }
+
+ create cdi bean for model 
+-------------------------------
+
+ EntityManager em;
+    /**
+     * Creates a new instance of ProductBean
+     */
+    public ProductBean() {
+         em = Persistence.createEntityManagerFactory("com.mycompany_TestJwtService_war_1.0-SNAPSHOTPU").createEntityManager();
+    }
+    
+    public Collection<Product> getProducts() { 
+        int price = 5000;
+         //return em.createNamedQuery("Product.findAll",Product.class).getResultList();
+        return em.createQuery("SELECT p FROM Product p WHERE p.price <" + price ).getResultList();
+    }
+
+add function into rest service
+-----------------------------
+ @Inject ProductBean obj;
+
+ @RolesAllowed("Admin")
+    @GET
+    @Path("getProduct")
+    @Produces(MediaType.APPLICATION_XML)
+    public Collection<Product> getProduct() {
+        
+        return obj.getProducts();
+    }
+
+7. In frontendApp in source package add token folder
+
+8. Add private key frontendApp into other package /src/main/resource in default package
+
+9.create client(Interface) of service in source package 
+=> Add line before public class
+
+@RegisterRestClient(baseUri = "http://localhost:8080/TestJwtService/rest/example")
+@ClientHeaderParam(name = "Authorization",value = "{generateToken}")
+public interface clientTest {
+    
+    @GET
+    @Path("getHello")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getHello();
+    
+    @GET
+    @Path("getProduct")
+    @Produces(MediaType.APPLICATION_XML)
+    public Collection<Product> getProduct();
+    
+    default String generateToken(){
+        String token = GenerateToken.generateJWT();
+        return "Bearer "+token;
+    }
+    
+}
+
+10. call into servlet
+=>
+	 @RestClient @Inject clientTest ct;
+
+Collection<Product> products;
+
+ products = ct.getProduct();
+               for(Product h : products)
+                    {
+                     out.println(h.getProductname()+"\t"+h.getPrice());   
+                    }
